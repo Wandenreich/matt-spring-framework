@@ -26,11 +26,26 @@ public interface AbstractApplicationContext {
     void register(Class<?> clazz);
 
     /**
-     * 依赖查找
+     * 依赖查找 byName
      *
+     * @param beanName beanName
      * @return bean 对象
      */
-    Object getBean();
+    Object getBean(String beanName);
+
+
+    /**
+     * 依赖查找 byType
+     *
+     * @param beanClass beanClass
+     * @return bean对象
+     */
+    Object getBean(Class<?> beanClass);
+
+    /**
+     * 关闭应用上下文
+     */
+    void close();
 
 
 }

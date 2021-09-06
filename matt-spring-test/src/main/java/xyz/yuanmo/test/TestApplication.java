@@ -14,6 +14,10 @@ public class TestApplication {
         MattApplicationContext mattApplicationContext = new MattApplicationContext(BaseConfig.class);
         mattApplicationContext.refresh();
 
+        System.out.println("dataSourceConfig: " + mattApplicationContext.getBean("dataSourceConfig"));
+
+        mattApplicationContext.close();
+
 
     }
 }
