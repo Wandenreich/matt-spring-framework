@@ -106,6 +106,7 @@ public class MattApplicationContext implements AbstractApplicationContext {
             Object instance = beanClass.getConstructor().newInstance();
 
             // 依赖注入
+            // 属于是致敬 AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject() 方法了
             for (Field field : beanClass.getDeclaredFields()) {
                 if (field.isAnnotationPresent(MattAutowired.class)) {
                     field.setAccessible(true);
@@ -155,7 +156,8 @@ public class MattApplicationContext implements AbstractApplicationContext {
             File file = new File(url.getFile());
             dfs(file, scanClassPathSet, ".class");
             for (String classPath : scanClassPathSet) {
-                String className = classPath.substring(classPath.indexOf("classes/") + "classes/".length(), classPath.indexOf(".class"));
+                System.out.println("classPath = " + classPath);
+                String className = classPath.substring(classPath.lastIndexOf("classes/") + "classes/".length(), classPath.indexOf(".class"));
                 className = className.replace("/", ".");
                 Class<?> clazz = classLoader.loadClass(className);
                 scanBeanClassSet.add(clazz);
@@ -230,6 +232,19 @@ public class MattApplicationContext implements AbstractApplicationContext {
     private URL converted2AbsolutePath(String relativePaths) {
         relativePaths = relativePaths.replace(".", "/");
         return classLoader.getResource(relativePaths);
+    }
+
+
+    /**
+     * 注册 bean
+     * 相同的类, 会覆盖上一个, 也就是说只有一个对象, 重复注册相当于向一个 Set 里丢
+     *
+     * @param clazz 注册 beanClass
+     * @see MattApplicationContext#generateBeanName(Class)
+     */
+    @Override
+    public void register(Class<?> clazz) {
+        registerBeanClassMap.put(generateBeanName(clazz), clazz);
     }
 
     /**
@@ -323,5 +338,14 @@ public class MattApplicationContext implements AbstractApplicationContext {
         scanClassPathSet.clear();
         log.info("Good bye ~");
 
+    }
+
+
+    public void printBeanDefinition() {
+        mattBeanDefinitionMap.forEach((k, v) -> {
+            System.out.println("k = " + k);
+            System.out.println("v = " + v);
+            System.out.println("---------");
+        });
     }
 }

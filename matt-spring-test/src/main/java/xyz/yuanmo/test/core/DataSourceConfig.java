@@ -1,5 +1,6 @@
 package xyz.yuanmo.test.core;
 
+import xyz.yuanmo.spring.annotation.MattAutowired;
 import xyz.yuanmo.spring.bean.MattBeanPostProcessor;
 import xyz.yuanmo.spring.annotation.MattBean;
 import xyz.yuanmo.spring.annotation.MattComponent;
@@ -12,6 +13,9 @@ import xyz.yuanmo.spring.annotation.MattComponent;
 @MattComponent("dataSourceConfig")
 public class DataSourceConfig implements MattBeanPostProcessor {
 
+
+    @MattAutowired
+    private User user;
 
     /**
      * 对 DataSource 初始化前做些处理
