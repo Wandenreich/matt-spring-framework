@@ -1,10 +1,10 @@
-# Matt-Spring-Framework(mini Spring) ![http://openjdk.java.net/projects/jdk/11/](https://img.shields.io/badge/Java-11.0.9-brightgreen)
+# Matt-Spring-Framework(mini Spring) ![http://openjdk.java.net/projects/jdk/11/](https://img.shields.io/badge/Java-11.0.9-brightgreen) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMatthew-Han%2Fmatt-spring-framework.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FMatthew-Han%2Fmatt-spring-framework?ref=badge_shield)
 
 > 风是从哪儿来手上的狗尾巴草摇的更剧烈
 > 
 > 稻穗也晃起来我紧握着你的手把它拍成照片
 
-## 0x00
+## 0x00 Feature
 
 默认 SDK 基于 Java 11
 
@@ -33,7 +33,7 @@
 - [ ] 循环依赖问题
 - [ ] 部分操作线程非安全
 
-## 0x01
+## 0x01 Study
 
 Spring 推荐学习视频:
 
@@ -41,3 +41,7 @@ Spring 推荐学习视频:
 
 0. [极客时间 - 小马哥讲Spring核心编程思想](https://time.geekbang.org/course/intro/100042601) (需要付费解锁, 讲得较为全面但是没有特别区分重点非重点, 需要突击面试的情况的话需要自己取舍.)
 1. [图灵教育公开课](https://www.bilibili.com/video/BV1dK4y127mH?p=64) (免费的公开课, 非常的浅, 比较适合对 Spring 完全没概念的小白, 学习之后会对 Spring 有一个大概的认知.)
+
+## 0x02 License
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMatthew-Han%2Fmatt-spring-framework.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FMatthew-Han%2Fmatt-spring-framework?ref=badge_large)

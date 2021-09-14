@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2021 Matthew Han
+ * Copyright (c) 2021 元末
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,5 +27,38 @@ package xyz.yuanmo.spring.bean;
  * @date 2021/9/6 16:27
  * @since 1.0
  **/
-public interface FactoryBean {
+public interface FactoryBean<T> {
+
+
+    /**
+     * 返回此工厂管理的对象的实例（可能是共享的或独立的)
+     *
+     * @return bean 的一个实例（可以为null）
+     * @throws Exception Exception
+     */
+    T getObject() throws Exception;
+
+
+    /**
+     * 返回此 FactoryBean 创建的对象类型, 如果事先未知, 则返回null
+     * 这允许人们在不实例化对象的情况下检查特定类型的 bean, 例如在自动装配时
+     * 在创建单例对象的实现的情况下, 此方法应尽量避免创建单例, 它应该提前估计类型
+     * 对于原型, 也建议在此处返回有意义的类型
+     *
+     * @return 此 FactoryBean 创建的对象类型, 如果在调用时未知, 则为 null
+     */
+    Class<?> getObjectType();
+
+
+    /**
+     * FactoryBean 本身的单例状态一般由拥有的 BeanFactory 提供
+     * 通常, 它必须在那里定义为单例
+     * 默认实现返回true, 因为 FactoryBean 通常管理一个单例实例
+     *
+     * @return 暴露的对象是否是单例
+     */
+    default boolean isSingleton() {
+        return true;
+    }
+
 }
