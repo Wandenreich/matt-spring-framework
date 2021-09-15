@@ -27,7 +27,7 @@ package xyz.yuanmo.spring.bean;
  * @date 2021/9/6 16:30
  * @since 1.0
  **/
-public interface InitializingBean {
+public interface MattInitializingBean {
 
     /**
      * 此方法允许 bean 实例在设置所有 bean 属性后执行其整体配置和最终初始化的验证。

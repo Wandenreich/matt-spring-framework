@@ -1,8 +1,6 @@
 package xyz.yuanmo.test.pojo;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 /**
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
@@ -18,4 +16,18 @@ public class Book {
 
     private String price;
 
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "bookName='" + bookName + '\'' +
+                ", price='" + price + '\'' +
+                ", hashCode='" + hashCode() + '\'' +
+                '}';
+    }
 }

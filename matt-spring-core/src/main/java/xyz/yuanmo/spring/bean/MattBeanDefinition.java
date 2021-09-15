@@ -44,7 +44,7 @@ public class MattBeanDefinition {
     /**
      * 是否是 factoryBean 对象
      *
-     * @see FactoryBean
+     * @see MattFactoryBean
      */
     private boolean isFactoryBean;
 

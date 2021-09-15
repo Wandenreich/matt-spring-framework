@@ -26,20 +26,22 @@ import xyz.yuanmo.spring.ac.MattApplicationContext;
 
 /**
  * 该接口可以手动创建一个 bean
- * 创建的 bean 的实例化对象会提前进入 {@link xyz.yuanmo.spring.ac.MattApplicationContext#mattSingletonBeanMap} 中
  * bean 的 beanName 还是与其它注册的 bean 类似
- * bean 的 class 类型会以 {@link #getObjectType()} 的, 而不是接口本身的类型
+ * bean 的 class 类型会以接口本身的类型构建 MattBeanDefinition
  * 所以在 {@link xyz.yuanmo.spring.ac.MattApplicationContext#getBean(Class)} 中, 需要选择创建的类型
- * 该实现类本身并不会存储到容器中(就是个工具人啦)
+ * 该实现类本身也会存储到容器中, 与创建的对象的类直接获取是同一个东西
+ * <p>
  *
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
  * @date 2021/9/6 16:27
  * @see MattApplicationContext#createBean(String, MattBeanDefinition) ()
  * @see MattApplicationContext#buildBeanDefinition(String, Class) ()
  * @see MattApplicationContext#getBean(Class)
+ * @see MattApplicationContext#mattFactoryBeanMap
+ * @see MattApplicationContext#beanClassConvert(Class)
  * @since 1.0
  **/
-public interface FactoryBean<T> {
+public interface MattFactoryBean<T> {
 
 
     /**

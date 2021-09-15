@@ -1,15 +1,14 @@
 package xyz.yuanmo.test.fb;
 
-import xyz.yuanmo.spring.bean.FactoryBean;
+import xyz.yuanmo.spring.bean.MattFactoryBean;
 import xyz.yuanmo.test.pojo.Book;
 
 /**
- *
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
  * @date 2021/9/15 16:03
  * @since 1.0
  **/
-public class MyFactoryBean implements FactoryBean<Book> {
+public class MyMattFactoryBean implements MattFactoryBean<Book> {
 
     /**
      * 返回此工厂管理的对象的实例（可能是共享的或独立的)
@@ -33,5 +32,10 @@ public class MyFactoryBean implements FactoryBean<Book> {
     @Override
     public Class<?> getObjectType() {
         return Book.class;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return false;
     }
 }
