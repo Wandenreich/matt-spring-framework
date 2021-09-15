@@ -40,6 +40,14 @@ public class MattBeanDefinition {
      */
     private Class<?> beanClass;
 
+
+    /**
+     * 是否是 factoryBean 对象
+     *
+     * @see FactoryBean
+     */
+    private boolean isFactoryBean;
+
     public ScopeFactory getScope() {
         return scope;
     }
@@ -54,6 +62,14 @@ public class MattBeanDefinition {
 
     public void setBeanClass(Class<?> beanClass) {
         this.beanClass = beanClass;
+    }
+
+    public boolean getFactoryBean() {
+        return isFactoryBean;
+    }
+
+    public void setFactoryBean(boolean factoryBean) {
+        isFactoryBean = factoryBean;
     }
 
     public enum ScopeFactory {

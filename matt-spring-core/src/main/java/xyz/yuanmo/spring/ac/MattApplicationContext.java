@@ -27,6 +27,7 @@ import xyz.yuanmo.spring.annotation.MattAutowired;
 import xyz.yuanmo.spring.annotation.MattComponent;
 import xyz.yuanmo.spring.annotation.MattScan;
 import xyz.yuanmo.spring.annotation.MattScope;
+import xyz.yuanmo.spring.bean.FactoryBean;
 import xyz.yuanmo.spring.bean.InitializingBean;
 import xyz.yuanmo.spring.bean.MattBeanDefinition;
 import xyz.yuanmo.spring.bean.MattBeanPostProcessor;
@@ -103,7 +104,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
         // 扫描
         scan();
 
-
         // 构建 BeanDefinition
         buildBeanDefinition();
 
@@ -115,17 +115,22 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
     private void createBean() {
         log.info("创建 Bean 中并存入缓存中...");
-        mattBeanDefinitionMap.forEach((beanName, mattBeanDefinition) -> {
-            createBean(beanName, mattBeanDefinition);
-        });
+        mattBeanDefinitionMap.forEach(this::createBean);
     }
 
     private Object createBean(String beanName, MattBeanDefinition beanDefinition) {
         Class<?> beanClass = beanDefinition.getBeanClass();
-
         try {
+
             // 实例化 BeanDefinition
-            Object instance = beanClass.getConstructor().newInstance();
+            Object instance;
+
+            // 如果是由 FactoryBean 创建的, 需要从 mattSingletonBeanMap 获取, 不重新实例化
+            if (beanDefinition.getFactoryBean()) {
+                instance = mattSingletonBeanMap.get(beanName);
+            } else {
+                instance = beanClass.getConstructor().newInstance();
+            }
 
             // 依赖注入
             // 属于是致敬 AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject() 方法了
@@ -193,7 +198,7 @@ public class MattApplicationContext implements AbstractApplicationContext {
     /**
      * 构建 beanDefinition
      */
-    private void buildBeanDefinition() throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+    private void buildBeanDefinition() throws Exception {
         log.info("构建 BeanDefinition 中...");
         for (Class<?> clazz : scanBeanClassSet) {
             // 需要被扫描的注解
@@ -210,19 +215,37 @@ public class MattApplicationContext implements AbstractApplicationContext {
         }
     }
 
-    private void buildBeanDefinition(String beanName, Class<?> clazz) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    private void buildBeanDefinition(String beanName, Class<?> clazz) throws Exception {
 
-        // 实现了 beanPostProcessor 的 class
-        if (clazz.isAssignableFrom(MattBeanPostProcessor.class)) {
+        // 实现了 beanPostProcessor 的 bean
+        if (MattBeanPostProcessor.class.isAssignableFrom(clazz)) {
+
             mattBeanPostProcessorSet.add((MattBeanPostProcessor) clazz.getDeclaredConstructor().newInstance());
         }
 
         MattBeanDefinition mattBeanDefinition = new MattBeanDefinition();
-        MattBeanDefinition.ScopeFactory scopeFactory = clazz.isAnnotationPresent(MattScope.class) ? clazz.getDeclaredAnnotation(MattScope.class).scopeType() : MattBeanDefinition.ScopeFactory.SCOPE_SINGLETON;
-        mattBeanDefinition.setScope(scopeFactory);
-        mattBeanDefinition.setBeanClass(clazz);
 
+        // 实现了 FactoryBean 的 bean
+        // 在这里的实现是丢弃了原有的 FactoryBean, 并且提前获得 bean 对象
+        // 所以如果 getBeanByType 无法找到 实现 FactoryBean 的类, 只能找到 FactoryBean 创建的 bean 对象的类
+        if (FactoryBean.class.isAssignableFrom(clazz)) {
+            FactoryBean<?> factoryBean = (FactoryBean<?>) clazz.getDeclaredConstructor().newInstance();
+            Object instance = factoryBean.getObject();
+            Class<?> trueClass = factoryBean.getObjectType();
+            MattBeanDefinition.ScopeFactory scopeFactory = factoryBean.isSingleton() ? MattBeanDefinition.ScopeFactory.SCOPE_SINGLETON : MattBeanDefinition.ScopeFactory.SCOPE_PROTOTYPE;
+            mattBeanDefinition.setScope(scopeFactory);
+            mattBeanDefinition.setBeanClass(trueClass);
+            mattBeanDefinition.setFactoryBean(true);
+            mattSingletonBeanMap.put(beanName, instance);
+        } else {
+            MattBeanDefinition.ScopeFactory scopeFactory = clazz.isAnnotationPresent(MattScope.class) ? clazz.getDeclaredAnnotation(MattScope.class).scopeType() : MattBeanDefinition.ScopeFactory.SCOPE_SINGLETON;
+            mattBeanDefinition.setScope(scopeFactory);
+            mattBeanDefinition.setBeanClass(clazz);
+            mattBeanDefinition.setFactoryBean(false);
+        }
         mattBeanDefinitionMap.put(beanName, mattBeanDefinition);
+
+
     }
 
 
@@ -351,8 +374,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
     public void close() {
 
         log.info("应用上下文正在关闭...");
-        System.out.println("mattBeanDefinitionMap = " + mattBeanDefinitionMap);
-        System.out.println("mattSingletonBeanMap = " + mattSingletonBeanMap);
 
         mattBeanDefinitionMap.clear();
         mattSingletonBeanMap.clear();
@@ -367,7 +388,15 @@ public class MattApplicationContext implements AbstractApplicationContext {
         mattBeanDefinitionMap.forEach((k, v) -> {
             System.out.println("k = " + k);
             System.out.println("v = " + v);
-            System.out.println("---------");
+            System.out.println("------------------");
+        });
+
+        System.out.println("==================");
+
+        mattSingletonBeanMap.forEach((k, v) -> {
+            System.out.println("k = " + k);
+            System.out.println("v = " + v);
+            System.out.println("------------------");
         });
     }
 }

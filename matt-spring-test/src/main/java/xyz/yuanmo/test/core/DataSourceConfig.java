@@ -4,6 +4,7 @@ import xyz.yuanmo.spring.annotation.MattAutowired;
 import xyz.yuanmo.spring.bean.MattBeanPostProcessor;
 import xyz.yuanmo.spring.annotation.MattBean;
 import xyz.yuanmo.spring.annotation.MattComponent;
+import xyz.yuanmo.test.User;
 
 /**
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
