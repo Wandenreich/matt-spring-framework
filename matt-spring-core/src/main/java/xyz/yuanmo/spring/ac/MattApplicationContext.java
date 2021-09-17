@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * 启动类
+ * 启动应用上下文
  *
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
  * @date 2021/9/2 16:39
@@ -53,8 +53,7 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
-
-    private Class<?> baseConfigClazz;
+    private Class<?> baseConfigClass;
 
     private ClassLoader classLoader;
 
@@ -75,16 +74,15 @@ public class MattApplicationContext implements AbstractApplicationContext {
      */
     private Map<Class<?>, Class<?>> mattFactoryBeanMap;
 
-
     /**
      * {@link MattApplicationContext#scanBeanClassSet} 需要注册的 bean, 仅仅只是扫描路径下的 class
      * {@link MattApplicationContext#registerBeanClassMap} 需要注册的 bean, 包含 {@link MattApplicationContext#register(String, Class)} 的 class
      *
-     * @param _baseConfigClazz
+     * @param _baseConfigClazz 配置类
      */
     public MattApplicationContext(Class<?> _baseConfigClazz) {
         this.classLoader = this.getClass().getClassLoader();
-        this.baseConfigClazz = _baseConfigClazz;
+        this.baseConfigClass = _baseConfigClazz;
 
         this.scanClassPathSet = new HashSet<>(1 << 2);
         this.scanBeanClassSet = new HashSet<>(1 << 2);
@@ -92,7 +90,7 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
         this.mattBeanPostProcessorSet = new HashSet<>(1 << 2);
         this.mattBeanDefinitionMap = new ConcurrentHashMap<>();
-        this.mattSingletonBeanMap = new ConcurrentHashMap<>();
+        this.mattSingletonBeanMap = new ConcurrentHashMap<>(1 << 2);
 
         this.mattFactoryBeanMap = new ConcurrentHashMap<>();
     }
@@ -106,7 +104,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
     @SneakyThrows
     @Override
     public void refresh() {
-
         // 扫描
         scan();
 
@@ -116,9 +113,7 @@ public class MattApplicationContext implements AbstractApplicationContext {
         // 执行 bean 的生命周期~
         createBean();
 
-
     }
-
 
     /**
      * 扫描
@@ -128,14 +123,13 @@ public class MattApplicationContext implements AbstractApplicationContext {
     public void scan() {
 
         log.info("扫描中加载 bean 中...");
-        if (baseConfigClazz.isAnnotationPresent(MattScan.class)) {
-            MattScan mattScan = baseConfigClazz.getAnnotation(MattScan.class);
+        if (baseConfigClass.isAnnotationPresent(MattScan.class)) {
+            MattScan mattScan = baseConfigClass.getAnnotation(MattScan.class);
             String singletonPath = mattScan.value();
             URL url = converted2AbsolutePath(singletonPath);
             File file = new File(url.getFile());
-            dfs(file, scanClassPathSet, ".class");
+            dfs(file, ".class");
             for (String classPath : scanClassPathSet) {
-                System.out.println("classPath = " + classPath);
                 String className = classPath.substring(classPath.lastIndexOf("classes/") + "classes/".length(), classPath.indexOf(".class"));
                 className = className.replace("/", ".");
                 Class<?> clazz = classLoader.loadClass(className);
@@ -147,31 +141,29 @@ public class MattApplicationContext implements AbstractApplicationContext {
         }
     }
 
-
     /**
      * 递归获取 Class 文件绝对路径
      *
-     * @param curr
-     * @param scanClazzPathSet
+     * @param curr 当前 File 对象
      */
-    private void dfs(File curr, Set<String> scanClazzPathSet, String suffix) {
+    private void dfs(File curr, String suffix) {
         if (curr == null) {
             return;
         }
         if (curr.isDirectory()) {
-            for (File next : curr.listFiles()) {
-                dfs(next, scanClazzPathSet, suffix);
+            for (File next : Objects.requireNonNull(curr.listFiles())) {
+                dfs(next, suffix);
             }
         } else if (curr.isFile() && curr.getName().endsWith(suffix)) {
-            scanClazzPathSet.add(curr.getAbsolutePath());
+            scanClassPathSet.add(curr.getAbsolutePath());
         }
     }
 
     /**
      * 获取绝对路径
      *
-     * @param relativePaths
-     * @return
+     * @param relativePaths 绝对路径
+     * @return URL
      */
     private URL converted2AbsolutePath(String relativePaths) {
         relativePaths = relativePaths.replace(".", "/");
@@ -199,7 +191,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
     }
 
     private void buildBeanDefinition(String beanName, Class<?> clazz) throws Exception {
-
         // 实现了 beanPostProcessor 的 bean
         if (MattBeanPostProcessor.class.isAssignableFrom(clazz)) {
             mattBeanPostProcessorSet.add((MattBeanPostProcessor) clazz.getDeclaredConstructor().newInstance());
@@ -226,7 +217,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
         }
         mattBeanDefinitionMap.put(beanName, mattBeanDefinition);
 
-
     }
 
     private void createBean() {
@@ -234,6 +224,13 @@ public class MattApplicationContext implements AbstractApplicationContext {
         mattBeanDefinitionMap.forEach(this::createBean);
     }
 
+    /**
+     * 创建 bean 对象
+     *
+     * @param beanName       beanName
+     * @param beanDefinition 描述文件
+     * @return 单例 | 原生 的 bean 对象
+     */
     private Object createBean(String beanName, MattBeanDefinition beanDefinition) {
         Class<?> beanClass = beanDefinition.getBeanClass();
         try {
@@ -242,7 +239,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
             // 如果是由 FactoryBean 创建的, 需要从 mattSingletonBeanMap 获取, 不重新实例化
             if (beanDefinition.getFactoryBean()) {
-
                 MattFactoryBean<?> factoryBean = (MattFactoryBean<?>) beanClass.getDeclaredConstructor().newInstance();
                 instance = factoryBean.getObject();
             } else {
@@ -277,7 +273,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
             }
             return instance;
 
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -285,17 +280,15 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
     }
 
-
     /**
      * 注册 bean
-     * 相同的类, 会覆盖上一个, 也就是说只有一个对象, 重复注册相当于向一个 Set 里丢
      *
      * @param clazz 注册 beanClass
      * @see MattApplicationContext#generateBeanName(Class)
      */
     @Override
     public void register(Class<?> clazz) {
-        registerBeanClassMap.put(generateBeanName(clazz), clazz);
+        register(generateBeanName(clazz), clazz);
     }
 
     /**
@@ -304,19 +297,23 @@ public class MattApplicationContext implements AbstractApplicationContext {
      * @param beanName beanName
      * @param clazz    注册 beanClass
      */
-    @SneakyThrows
     @Override
     public void register(String beanName, Class<?> clazz) {
         registerBeanClassMap.put(beanName, clazz);
     }
 
+    /**
+     * 生成 beanName
+     *
+     * @param clazz beanClass
+     * @return beanName
+     */
     public String generateBeanName(Class<?> clazz) {
         String tmp = clazz.getName().substring(clazz.getName().lastIndexOf(".") + 1);
         char[] name = tmp.toCharArray();
         name[0] = Character.toLowerCase(name[0]);
         return new String(name);
     }
-
 
     /**
      * 依赖查找 byName
@@ -389,8 +386,8 @@ public class MattApplicationContext implements AbstractApplicationContext {
      * 是的话经过转换
      * 最多两个 class
      *
-     * @param src
-     * @return
+     * @param src 实际需要查找的类
+     * @return 0 | 1 | 2 个 class
      */
     private Set<Class<?>> beanClassConvert(Class<?> src) {
         Set<Class<?>> res = new HashSet<>();
@@ -410,14 +407,14 @@ public class MattApplicationContext implements AbstractApplicationContext {
      */
     @Override
     public void close() {
-
         log.info("应用上下文正在关闭...");
+        scanClassPathSet.clear();
+        scanBeanClassSet.clear();
+        registerBeanClassMap.clear();
+        mattBeanPostProcessorSet.clear();
         mattBeanDefinitionMap.clear();
         mattSingletonBeanMap.clear();
-        mattBeanPostProcessorSet.clear();
-        scanClassPathSet.clear();
         log.info("Good bye ~");
-
     }
 
     /**
@@ -434,6 +431,13 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
         mattSingletonBeanMap.forEach((k, v) -> {
             System.out.println("k = " + k);
+            System.out.println("v = " + v);
+            System.out.println("------------------");
+        });
+
+        System.out.println("==================");
+
+        mattBeanPostProcessorSet.forEach(v -> {
             System.out.println("v = " + v);
             System.out.println("------------------");
         });

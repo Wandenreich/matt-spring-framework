@@ -14,10 +14,9 @@ public class MyMattFactoryBean implements MattFactoryBean<Book> {
      * 返回此工厂管理的对象的实例（可能是共享的或独立的)
      *
      * @return bean 的一个实例（可以为null）
-     * @throws Exception Exception
      */
     @Override
-    public Book getObject() throws Exception {
+    public Book getObject() {
         return new Book("<丫丫历险记>", "$6326");
     }
 
@@ -30,7 +29,7 @@ public class MyMattFactoryBean implements MattFactoryBean<Book> {
      * @return 此 FactoryBean 创建的对象类型, 如果在调用时未知, 则为 null
      */
     @Override
-    public Class<?> getObjectType() {
+    public Class<Book> getObjectType() {
         return Book.class;
     }
 

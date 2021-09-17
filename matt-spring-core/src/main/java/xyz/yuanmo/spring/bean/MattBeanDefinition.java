@@ -90,6 +90,7 @@ public class MattBeanDefinition {
         return "MattBeanDefinition{" +
                 "scope=" + scope +
                 ", beanClass=" + beanClass +
+                ", isFactoryBean=" + isFactoryBean +
                 '}';
     }
 }

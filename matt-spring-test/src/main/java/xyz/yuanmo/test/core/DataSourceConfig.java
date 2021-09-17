@@ -27,8 +27,8 @@ public class DataSourceConfig implements MattBeanPostProcessor {
      */
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) {
-        if (bean instanceof DataSource && "dataSourceConfig".equals(beanName)) {
-            System.out.println("DataSource 初始化前的处理");
+        if (bean instanceof DataSourceConfig && "dataSourceConfig".equals(beanName)) {
+            System.out.println("DataSourceConfig 初始化前的处理");
         }
         return bean;
     }

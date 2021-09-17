@@ -44,7 +44,6 @@ public interface AbstractApplicationContext {
 
     /**
      * 注册 bean
-     * 相同的类, 会覆盖上一个, 也就是说只有一个对象, 重复注册相当于向一个 Set 里丢
      *
      * @param clazz 注册 beanClass
      * @see MattApplicationContext#generateBeanName(Class)
@@ -73,7 +72,7 @@ public interface AbstractApplicationContext {
      *
      * @param beanClass beanClass
      * @return bean 对象
-     * @throws Exception e
+     * @throws Exception Exception
      */
     Object getBean(Class<?> beanClass) throws Exception;
 

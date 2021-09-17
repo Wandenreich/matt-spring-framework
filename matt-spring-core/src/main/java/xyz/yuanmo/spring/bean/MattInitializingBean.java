@@ -32,7 +32,7 @@ public interface MattInitializingBean {
     /**
      * 此方法允许 bean 实例在设置所有 bean 属性后执行其整体配置和最终初始化的验证。
      *
-     * @throws Exception
+     * @throws Exception Exception
      */
     void afterPropertiesSet() throws Exception;
 }
