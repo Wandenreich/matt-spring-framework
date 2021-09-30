@@ -1,8 +1,10 @@
 package xyz.yuanmo.test.core;
 
+import xyz.yuanmo.spring.annotation.MattAutowired;
 import xyz.yuanmo.spring.bean.MattBeanPostProcessor;
 import xyz.yuanmo.spring.annotation.MattBean;
 import xyz.yuanmo.spring.annotation.MattComponent;
+import xyz.yuanmo.test.User;
 
 /**
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
@@ -13,6 +15,9 @@ import xyz.yuanmo.spring.annotation.MattComponent;
 public class DataSourceConfig implements MattBeanPostProcessor {
 
 
+    @MattAutowired
+    private User user;
+
     /**
      * 对 DataSource 初始化前做些处理
      *
@@ -22,8 +27,8 @@ public class DataSourceConfig implements MattBeanPostProcessor {
      */
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) {
-        if (bean instanceof DataSource && "dataSourceConfig".equals(beanName)) {
-            System.out.println("DataSource 初始化前的处理");
+        if (bean instanceof DataSourceConfig && "dataSourceConfig".equals(beanName)) {
+            System.out.println("DataSourceConfig 初始化前的处理");
         }
         return bean;
     }

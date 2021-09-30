@@ -12,18 +12,15 @@ public class TestAnnotation {
     @Test
     public void fuck() {
         for (Annotation annotation : AnnotationConfig.class.getAnnotations()) {
-            if (annotation.getClass().isAssignableFrom(Father.class)) {
+            if (Father.class.isAssignableFrom(annotation.getClass())) {
                 for (Field field : AnnotationConfig.class.getDeclaredFields()) {
                     System.out.println("field.getName() = " + field.getName());
-
                 }
             }
             System.out.println(annotation.getClass().isAssignableFrom(Father.class));
             System.out.println("annotation = " + annotation);
             System.out.println("annotation.annotationType() = " + annotation.getClass().getAnnotatedSuperclass());
         }
-
-
     }
 
 }
