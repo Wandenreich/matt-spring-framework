@@ -27,10 +27,8 @@ import xyz.yuanmo.spring.annotation.MattAutowired;
 import xyz.yuanmo.spring.annotation.MattComponent;
 import xyz.yuanmo.spring.annotation.MattScan;
 import xyz.yuanmo.spring.annotation.MattScope;
-import xyz.yuanmo.spring.bean.MattFactoryBean;
-import xyz.yuanmo.spring.bean.MattInitializingBean;
-import xyz.yuanmo.spring.bean.MattBeanDefinition;
-import xyz.yuanmo.spring.bean.MattBeanPostProcessor;
+import xyz.yuanmo.spring.bean.*;
+
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -63,7 +61,9 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
     private Map<String, Class<?>> registerBeanClassMap;
 
-    private Set<MattBeanPostProcessor> mattBeanPostProcessorSet;
+    private Set<MattInitialBeanPostProcessor> mattInitialBeanPostProcessorSet;
+
+    private Set<MattInstanceBeanPostProcessor> mattInstanceBeanPostProcessorSet;
 
     private Map<String, MattBeanDefinition> mattBeanDefinitionMap;
 
@@ -88,7 +88,8 @@ public class MattApplicationContext implements AbstractApplicationContext {
         this.scanBeanClassSet = new HashSet<>(1 << 2);
         this.registerBeanClassMap = new ConcurrentHashMap<>(1 << 2);
 
-        this.mattBeanPostProcessorSet = new HashSet<>(1 << 2);
+        this.mattInitialBeanPostProcessorSet = new HashSet<>(1 << 2);
+        this.mattInstanceBeanPostProcessorSet = new HashSet<>(1 << 2);
         this.mattBeanDefinitionMap = new ConcurrentHashMap<>();
         this.mattSingletonBeanMap = new ConcurrentHashMap<>(1 << 2);
 
@@ -135,7 +136,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
                 Class<?> clazz = classLoader.loadClass(className);
                 scanBeanClassSet.add(clazz);
             }
-
         } else {
             throw new RuntimeException("BYD 闹麻了");
         }
@@ -184,7 +184,6 @@ public class MattApplicationContext implements AbstractApplicationContext {
                 registerBeanClassMap.put(beanName, clazz);
             }
         }
-
         for (Map.Entry<String, Class<?>> entry : registerBeanClassMap.entrySet()) {
             buildBeanDefinition(entry.getKey(), entry.getValue());
         }
@@ -192,8 +191,13 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
     private void buildBeanDefinition(String beanName, Class<?> clazz) throws Exception {
         // 实现了 beanPostProcessor 的 bean
-        if (MattBeanPostProcessor.class.isAssignableFrom(clazz)) {
-            mattBeanPostProcessorSet.add((MattBeanPostProcessor) clazz.getDeclaredConstructor().newInstance());
+        if (MattInitialBeanPostProcessor.class.isAssignableFrom(clazz)) {
+            mattInitialBeanPostProcessorSet.add((MattInitialBeanPostProcessor) clazz.getDeclaredConstructor().newInstance());
+        }
+
+        // 实现了 beanPostProcessor 的 bean
+        if (MattInstanceBeanPostProcessor.class.isAssignableFrom(clazz)) {
+            mattInstanceBeanPostProcessorSet.add((MattInstanceBeanPostProcessor) clazz.getDeclaredConstructor().newInstance());
         }
 
         MattBeanDefinition mattBeanDefinition = new MattBeanDefinition();
@@ -222,6 +226,7 @@ public class MattApplicationContext implements AbstractApplicationContext {
     private void createBean() {
         log.info("创建 Bean 中并存入缓存中...");
         mattBeanDefinitionMap.forEach(this::createBean);
+        mattSingletonBeanMap.forEach((k, v) -> log.info("已创建的 bean = " + k + " , val = " + v));
     }
 
     /**
@@ -234,29 +239,38 @@ public class MattApplicationContext implements AbstractApplicationContext {
     private Object createBean(String beanName, MattBeanDefinition beanDefinition) {
         Class<?> beanClass = beanDefinition.getBeanClass();
         try {
-            // 实例化 BeanDefinition
-            Object instance;
+            // 准备实例化 BeanDefinition
+            Object instance = null;
+
 
             // 如果是由 FactoryBean 创建的, 需要从 mattSingletonBeanMap 获取, 不重新实例化
             if (beanDefinition.getFactoryBean()) {
                 MattFactoryBean<?> factoryBean = (MattFactoryBean<?>) beanClass.getDeclaredConstructor().newInstance();
                 instance = factoryBean.getObject();
             } else {
-                instance = beanClass.getConstructor().newInstance();
+                if (MattInstanceBeanPostProcessor.class.isAssignableFrom(beanClass)) {
+                    // beanPostProcessor 实例化前的处理
+                    for (MattInstanceBeanPostProcessor beanPostProcessor : mattInstanceBeanPostProcessorSet) {
+                        if (beanPostProcessor.getClass() == beanClass) {
+                            instance = beanPostProcessor.postProcessBeforeInstantiation(beanClass, beanName);
+                            break;
+                        }
+                    }
+                } else {
+                    instance = beanClass.getConstructor().newInstance();
+                }
+
             }
 
             // 依赖注入
-            // 属于是致敬 AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject() 方法了
-            for (Field field : beanClass.getDeclaredFields()) {
-                if (field.isAnnotationPresent(MattAutowired.class)) {
-                    field.setAccessible(true);
-                    // 将 bean 重新赋值给 instance
-                    field.set(instance, getBean(field.getName()));
-                }
-            }
+            inject(beanClass, instance);
+
             // beanPostProcessor 初始化前的处理
-            for (MattBeanPostProcessor beanPostProcessor : mattBeanPostProcessorSet) {
-                instance = beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
+            for (MattInitialBeanPostProcessor beanPostProcessor : mattInitialBeanPostProcessorSet) {
+                if (beanPostProcessor.getClass() == beanClass) {
+                    instance = beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
+                    break;
+                }
             }
 
             // 初始化处理
@@ -265,8 +279,11 @@ public class MattApplicationContext implements AbstractApplicationContext {
             }
 
             // beanPostProcessor 初始化后的处理
-            for (MattBeanPostProcessor beanPostProcessor : mattBeanPostProcessorSet) {
-                instance = beanPostProcessor.postProcessAfterInitialization(instance, beanName);
+            for (MattInitialBeanPostProcessor beanPostProcessor : mattInitialBeanPostProcessorSet) {
+                if (beanPostProcessor.getClass() == beanClass) {
+                    instance = beanPostProcessor.postProcessAfterInitialization(instance, beanName);
+                    break;
+                }
             }
             if (beanDefinition.getScope() == MattBeanDefinition.ScopeFactory.SCOPE_SINGLETON) {
                 mattSingletonBeanMap.put(beanName, instance);
@@ -278,6 +295,28 @@ public class MattApplicationContext implements AbstractApplicationContext {
         }
         return null;
 
+    }
+
+    /**
+     * 依赖注入
+     *
+     * @param beanClass
+     * @param instance
+     * @throws IllegalAccessException
+     */
+    private void inject(Class<?> beanClass, Object instance) throws IllegalAccessException {
+        // 属于是致敬 AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject() 方法了
+        for (Field field : beanClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(MattAutowired.class)) {
+                field.setAccessible(true);
+                // 将 bean 重新赋值给 instance
+                if (null == getBean(field.getName())) {
+                    throw new RuntimeException("该 bean 未注册: " + field.getName());
+                } else {
+                    field.set(instance, getBean(field.getName()));
+                }
+            }
+        }
     }
 
     /**
@@ -411,7 +450,7 @@ public class MattApplicationContext implements AbstractApplicationContext {
         scanClassPathSet.clear();
         scanBeanClassSet.clear();
         registerBeanClassMap.clear();
-        mattBeanPostProcessorSet.clear();
+        mattInitialBeanPostProcessorSet.clear();
         mattBeanDefinitionMap.clear();
         mattSingletonBeanMap.clear();
         log.info("Good bye ~");
@@ -437,7 +476,12 @@ public class MattApplicationContext implements AbstractApplicationContext {
 
         System.out.println("==================");
 
-        mattBeanPostProcessorSet.forEach(v -> {
+        mattInstanceBeanPostProcessorSet.forEach(v -> {
+            System.out.println("v = " + v);
+            System.out.println("------------------");
+        });
+
+        mattInitialBeanPostProcessorSet.forEach(v -> {
             System.out.println("v = " + v);
             System.out.println("------------------");
         });

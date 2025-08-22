@@ -2,13 +2,11 @@ package xyz.yuanmo.test.core;
 
 import lombok.ToString;
 import xyz.yuanmo.spring.annotation.MattAutowired;
-import xyz.yuanmo.spring.bean.MattInitialBeanPostProcessor;
 import xyz.yuanmo.spring.annotation.MattBean;
 import xyz.yuanmo.spring.annotation.MattComponent;
+import xyz.yuanmo.spring.bean.MattInitialBeanPostProcessor;
 import xyz.yuanmo.spring.bean.MattInstanceBeanPostProcessor;
 import xyz.yuanmo.test.User;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
@@ -16,8 +14,8 @@ import java.lang.reflect.InvocationTargetException;
  * @since 1.0
  **/
 @ToString
-@MattComponent("dataSourceConfig")
-public class DataSourceConfig implements MattInstanceBeanPostProcessor, MattInitialBeanPostProcessor {
+@MattComponent("myDataSourceConfig")
+public class MyDataSourceConfig implements MattInstanceBeanPostProcessor, MattInitialBeanPostProcessor {
 
 
     @MattAutowired
@@ -25,8 +23,8 @@ public class DataSourceConfig implements MattInstanceBeanPostProcessor, MattInit
 
     @Override
     public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
-        if (beanClass == DataSourceConfig.class && "dataSourceConfig".equals(beanName)) {
-            System.out.println("DataSourceConfig [实例化]前的处理");
+        if (beanClass == MyDataSourceConfig.class && "myDataSourceConfig".equals(beanName)) {
+            System.out.println("myDataSourceConfig [实例化]前的处理");
         }
         try {
             return beanClass.getConstructor().newInstance();
@@ -50,16 +48,16 @@ public class DataSourceConfig implements MattInstanceBeanPostProcessor, MattInit
      */
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) {
-        if (bean instanceof DataSourceConfig && "dataSourceConfig".equals(beanName)) {
-            System.out.println("DataSourceConfig [初始化]前的处理");
+        if (bean instanceof MyDataSourceConfig && "myDataSourceConfig".equals(beanName)) {
+            System.out.println("myDataSourceConfig [初始化]前的处理");
         }
         return bean;
     }
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) {
-        if (bean instanceof DataSourceConfig && "dataSourceConfig".equals(beanName)) {
-            System.out.println("DataSourceConfig [初始化]后的处理");
+        if (bean instanceof MyDataSourceConfig && "myDataSourceConfig".equals(beanName)) {
+            System.out.println("myDataSourceConfig [初始化]后的处理");
         }
         return bean;
     }
@@ -96,7 +94,7 @@ public class DataSourceConfig implements MattInstanceBeanPostProcessor, MattInit
 
         @Override
         public String toString() {
-            return "DataSource{" +
+            return "MyDataSource{" +
                     "url='" + url + '\'' +
                     ", database='" + database + '\'' +
                     ", port=" + port +

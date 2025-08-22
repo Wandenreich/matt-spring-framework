@@ -23,11 +23,13 @@
 package xyz.yuanmo.spring.bean;
 
 /**
+ * 初始化的 post processor
+ *
  * @author <a href="https://github.com/Matthew-Han">Matthew Han</a>
  * @date 2021/9/6 10:41
  * @since 1.0
  **/
-public interface MattBeanPostProcessor {
+public interface MattInitialBeanPostProcessor {
 
     /**
      * 初始化前

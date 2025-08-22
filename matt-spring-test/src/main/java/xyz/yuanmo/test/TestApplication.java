@@ -19,7 +19,7 @@ public class TestApplication {
         mattApplicationContext.register(TestApplication.class);
         mattApplicationContext.register("pojoUser", User.class);
         mattApplicationContext.register("externalUser", xyz.yuanmo.test.User.class);
-        mattApplicationContext.register(xyz.yuanmo.test.User.class);
+        mattApplicationContext.register("xxx", xyz.yuanmo.test.User.class);
 
         mattApplicationContext.register(MyMattFactoryBean.class);
         mattApplicationContext.register(Book.class);
@@ -27,6 +27,7 @@ public class TestApplication {
 
 
         System.out.println("dataSourceConfig: " + mattApplicationContext.getBean("dataSourceConfig"));
+        System.out.println("myDataSourceConfig: " + mattApplicationContext.getBean("myDataSourceConfig"));
         System.out.println("coreUser: " + mattApplicationContext.getBeansOfType(xyz.yuanmo.test.User.class));
 
 
@@ -36,7 +37,6 @@ public class TestApplication {
         System.out.println("book: " + mattApplicationContext.getBean("myMattFactoryBean"));
 
         System.out.println(mattApplicationContext.getBean("myMattFactoryBean") == mattApplicationContext.getBean(MyMattFactoryBean.class));
-
 
         mattApplicationContext.printBeanDefinition();
         mattApplicationContext.close();

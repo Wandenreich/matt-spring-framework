@@ -10,6 +10,6 @@ import lombok.Data;
 @Data
 public class User {
 
-    private Long age;
+    private Long age = 100L;
 
 }
